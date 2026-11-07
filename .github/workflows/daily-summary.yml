@@ -42,6 +42,13 @@ jobs:
           HORIZON_WEBHOOK_URL: ${{ secrets.HORIZON_WEBHOOK_URL }}
         run: uv run horizon --hours 24
 
+      - name: Upload Horizon reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: horizon-reports
+          path: data/summaries/*.md
+          if-no-files-found: error
+
    #   - name: Set current date as environment variable
     #    run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
