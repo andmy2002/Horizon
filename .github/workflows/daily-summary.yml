@@ -49,6 +49,32 @@ jobs:
           path: data/summaries/*.md
           if-no-files-found: error
 
+      - name: Send reports to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          reports=(data/summaries/*.md)
+
+           if (( ${#reports[@]} == 0 )); then
+             echo "没有找到日报文件"
+             exit 1
+           fi
+
+           for report in "${reports[@]}"; do
+             curl --silent --show-error --fail-with-body \
+               --connect-timeout 20 --max-time 120 \
+               -X POST \
+               "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
+               --form-string "chat_id=${TELEGRAM_CHAT_ID}" \
+               --form-string "caption=Horizon 每日新闻" \
+               -F "document=@${report}" \
+               | python -c 'import json,sys; r=json.load(sys.stdin); sys.exit(0 if r.get("ok") else "Telegram 发送失败")'
+           done
+
    #   - name: Set current date as environment variable
     #    run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
